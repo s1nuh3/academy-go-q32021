@@ -10,11 +10,11 @@ import (
 
 func main() {
 	app := app.New()
-
+	port := ":8889"
 	http.HandleFunc("/", app.Router.ServeHTTP)
 
-	log.Println("App running..")
-	err := http.ListenAndServe(":8889", nil)
+	log.Println("App running.. on port ", port)
+	err := http.ListenAndServe(port, nil)
 	errHandler(err)
 }
 

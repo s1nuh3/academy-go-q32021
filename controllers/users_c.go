@@ -2,12 +2,13 @@ package controllers
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/s1nuh3/academy-go-q32021/services"
+
+	"github.com/gorilla/mux"
 )
 
 // GetUsers - Returns the list of users
@@ -15,12 +16,16 @@ func GetUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u, err := services.GetUsersfromCSV()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Error :"+err.Error())
+			returnError(w, r, err, 500)
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(u)
+		if len(*u) != 0 {
+			json.NewEncoder(w).Encode(u)
+			return
+		} else {
+			jso, _ := json.Marshal([]int{})
+			w.Write(jso)
+		}
 	}
 }
 
@@ -28,19 +33,26 @@ func GetUsers() http.HandlerFunc {
 func GetUsersbyId() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
-		id, _ := strconv.Atoi(vars["id"])
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			returnError(w, r, errors.New("ID provided is not valid"), 400)
+			return
+		}
 		u, err := services.GetUserbyIdfromCSV(id)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "Error :"+err.Error())
+			returnError(w, r, err, 500)
+			return
 		}
-		if u.Id == 0 {
+		if u.ID == 0 {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
 			json.NewEncoder(w).Encode(u)
 		}
 
 	}
+}
+
+func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
+	http.Error(w, err.Error(), status)
 }

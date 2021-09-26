@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -9,50 +10,54 @@ import (
 )
 
 // GetUsersfromCSV - Returns a colection of model.users from a csv file
-func GetUsersfromCSV() ([]models.Users, error) {
+func GetUsersfromCSV() (*[]models.Users, error) {
+	var invalidRecords int
 	rcd, err := common.ReadCsv("./repositories/files/usersdata.csv")
 	if err != nil {
 		return nil, err
 	}
-
 	var u []models.Users
 	for _, r := range rcd {
-		id, _ := strconv.Atoi(r[0])
-		status, _ := strconv.ParseBool(r[4])
-		data := models.Users{
-			Id:     id,
-			Name:   r[1],
-			Email:  r[2],
-			Gender: r[3],
-			Status: status,
+		data, err := parseUserRecord(r)
+		if err != nil {
+			invalidRecords++
+		} else {
+			u = append(u, *data)
 		}
-		u = append(u, data)
 	}
-	fmt.Println(u)
-	return u, nil
+	fmt.Println("Files has invalid records - #total: ", invalidRecords)
+	return &u, nil
 }
 
 // GetUserbyIdfromCSV - Returns a user by id if it's found in a csv file
-func GetUserbyIdfromCSV(id int) (models.Users, error) {
-	u := models.Users{}
-	rcd, err := common.ReadCsv("./repositories/files/emptyFile.csv")
+func GetUserbyIdfromCSV(id int) (*models.Users, error) {
+	u := &models.Users{}
+	rcd, err := common.ReadCsv("./repositories/files/usersdata.csv")
 	if err != nil {
 		return u, err
 	}
 
 	for _, r := range rcd {
-		i, _ := strconv.Atoi(r[0])
-		if i == id {
-			status, _ := strconv.ParseBool(r[4])
-			u = models.Users{
-				Id:     i,
-				Name:   r[1],
-				Email:  r[2],
-				Gender: r[3],
-				Status: status,
-			}
+		if r[0] == strconv.Itoa(id) {
+			u, _ = parseUserRecord(r)
+			break
 		}
 	}
-	fmt.Println(u)
 	return u, nil
+}
+
+func parseUserRecord(r []string) (*models.Users, error) {
+	id, err := strconv.Atoi(r[0])
+	if err != nil {
+		return nil, errors.New("invalid record")
+	}
+	status, _ := strconv.ParseBool(r[4])
+	u := models.Users{
+		ID:     id,
+		Name:   r[1],
+		Email:  r[2],
+		Gender: r[3],
+		Status: status,
+	}
+	return &u, nil
 }

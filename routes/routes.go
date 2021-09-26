@@ -1,8 +1,9 @@
 package routes
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/s1nuh3/academy-go-q32021/controllers"
+
+	"github.com/gorilla/mux"
 )
 
 // Get - Add the handlers to the get methods aviable

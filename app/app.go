@@ -1,10 +1,12 @@
 package app
 
 import (
-	"github.com/gorilla/mux"
 	"github.com/s1nuh3/academy-go-q32021/routes"
+
+	"github.com/gorilla/mux"
 )
 
+// App - This struc is to implement router and other dependencies each time app gets created
 type App struct {
 	Router *mux.Router
 }
