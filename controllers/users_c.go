@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,9 +13,10 @@ import (
 )
 
 // GetUsers - Returns the list of users
-func GetUsers() http.HandlerFunc {
+func GetUsers(s *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		u, err := services.GetUsersfromCSV()
+		fmt.Println(s)
+		u, err := s.ListUsers()
 		if err != nil {
 			returnError(w, r, err, 500)
 		}
@@ -30,7 +32,7 @@ func GetUsers() http.HandlerFunc {
 }
 
 // GetUsersbyId - Look up for a user id
-func GetUsersbyId() http.HandlerFunc {
+func GetUsersbyId(s *services.UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id, err := strconv.Atoi(vars["id"])
@@ -38,7 +40,7 @@ func GetUsersbyId() http.HandlerFunc {
 			returnError(w, r, errors.New("ID provided is not valid"), 400)
 			return
 		}
-		u, err := services.GetUserbyIdfromCSV(id)
+		u, err := s.GetUser(id)
 		if err != nil {
 			returnError(w, r, err, 500)
 			return

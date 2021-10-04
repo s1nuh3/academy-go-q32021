@@ -1,7 +1,9 @@
 package app
 
 import (
+	"github.com/s1nuh3/academy-go-q32021/repository"
 	"github.com/s1nuh3/academy-go-q32021/routes"
+	"github.com/s1nuh3/academy-go-q32021/services"
 
 	"github.com/gorilla/mux"
 )
@@ -13,13 +15,11 @@ type App struct {
 
 // New - Creates a new app that implements routing
 func New() *App {
-	A := &App{
-		Router: mux.NewRouter(),
+	usersRepo := repository.NewUserCSV("./repository/files/usersdata.csv")
+	userUsecase := services.NewService(usersRepo)
+	r := routes.NewRouter(userUsecase)
+	a := &App{
+		Router: r.Handlers(),
 	}
-	A.initRoutes()
-	return A
-}
-
-func (a *App) initRoutes() {
-	routes.Get(a.Router)
+	return a
 }
