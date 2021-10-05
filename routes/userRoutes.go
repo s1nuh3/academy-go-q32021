@@ -1,27 +1,26 @@
 package routes
 
 import (
-	"github.com/s1nuh3/academy-go-q32021/controllers"
-	"github.com/s1nuh3/academy-go-q32021/services"
+	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-type UserRoutes struct {
-	us *services.UserService
+type Controller interface {
+	GetUsers(w http.ResponseWriter, r *http.Request)
+	GetUsersbyId(w http.ResponseWriter, r *http.Request)
+	IndexHandler(w http.ResponseWriter, r *http.Request)
 }
 
-func NewRouter(us *services.UserService) *UserRoutes {
-	return &UserRoutes{
-		us: us,
-	}
+type RouteImportInterface interface {
+	ImportUserRte(w http.ResponseWriter, r *http.Request)
 }
 
-// Get - Add the handlers to the get methods aviable
-func (rs UserRoutes) Handlers() *mux.Router {
+func New(c Controller, ci RouteImportInterface) *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/", controllers.IndexHandler()).Methods("GET")
-	r.HandleFunc("/users", controllers.GetUsers(rs.us)).Methods("GET")
-	r.HandleFunc("/users/{id}", controllers.GetUsersbyId(rs.us)).Methods("GET")
+	r.HandleFunc("/", c.IndexHandler).Methods("GET")
+	r.HandleFunc("/users", c.GetUsers).Methods("GET")
+	r.HandleFunc("/users/{id}", c.GetUsersbyId).Methods("GET")
+	r.HandleFunc("/users/import/{id}", ci.ImportUserRte).Methods("GET")
 	return r
 }
