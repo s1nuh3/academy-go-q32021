@@ -7,7 +7,7 @@ type UserUC struct {
 }
 
 //NewService create service for user usecase
-func New(r Repository) *UserUC {
+func NewUser(r Repository) *UserUC {
 	return &UserUC{
 		repo: r,
 	}

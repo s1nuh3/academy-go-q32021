@@ -2,12 +2,13 @@ package clientAPI
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strconv"
 
-	"github.com/s1nuh3/academy-go-q32021/common"
 	"github.com/s1nuh3/academy-go-q32021/config"
 	"github.com/s1nuh3/academy-go-q32021/model"
 )
@@ -15,6 +16,12 @@ import (
 //ClientMyAPI - Struc to receibe Client conf
 type ClientMyAPI struct {
 	host string
+	csv  CSV
+}
+
+type CSV interface {
+	WriteALLData(records [][]string) error
+	WriteRowData(record []string) error
 }
 
 type extUser struct {
@@ -22,27 +29,31 @@ type extUser struct {
 	Data model.Users `json:"data"`
 }
 
-var cfg config.Config
-
 //NewClient - Creates the implementation for UseCase ConsumeAPI
-func New(cg config.Config) ClientMyAPI {
-	cfg = cg
-	return ClientMyAPI{host: cg.Client.Host + cg.Client.APIVer}
+func New(cg config.Config, c CSV) ClientMyAPI {
+	return ClientMyAPI{host: cg.Client.Host + cg.Client.APIVer, csv: c}
 }
 
 func (cm ClientMyAPI) ImportUser(id int) (*model.Users, error) {
 
 	resp := request(cm, id)
-	//fmt.Printf("API Response Body %+v\n", resp.Body)
 	responseObject := unmarshalResponse(resp)
-
-	err := common.WriteRowData(cfg.Csv.Path+cfg.Csv.Name, []string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
+	err := WriteToCSV(responseObject, cm)
 	if err != nil {
-		fmt.Print(err.Error())
-		return nil, err
+		return nil, errors.New("an error ocurred at saving imported user")
 	}
-
 	return &responseObject.Data, nil
+}
+
+func WriteToCSV(responseObject extUser, cm ClientMyAPI) error {
+	if responseObject.Data.ID != 0 && responseObject.Data.Email != "" {
+		err := cm.csv.WriteRowData([]string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
+		if err != nil {
+			log.Print(err.Error())
+			return err
+		}
+	}
+	return nil
 }
 
 func unmarshalResponse(bodyBytes []byte) extUser {
@@ -53,7 +64,7 @@ func unmarshalResponse(bodyBytes []byte) extUser {
 		fmt.Print(err.Error())
 		return extUser{}
 	}
-	fmt.Printf("API Response as struct %+v\n", responseObject)
+	//fmt.Printf("API Response as struct %+v\n", responseObject)
 
 	return responseObject
 }
@@ -71,13 +82,14 @@ func request(cm ClientMyAPI, id int) []byte {
 	resp, err := cl.Do(req)
 	if err != nil {
 		fmt.Print(err.Error())
+		return []byte{}
 	}
 	defer resp.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Print(err.Error())
-		return nil
+		return []byte{}
 	}
 
 	return bodyBytes
