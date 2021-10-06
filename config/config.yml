@@ -1,0 +1,10 @@
+csv:
+  path: ./repository/files/
+  name: usersdataa.csv
+
+server:
+  port: ":8889"
+
+client:
+  host: "https://gorest.co.in/public"
+  APIVer: "/v1"
