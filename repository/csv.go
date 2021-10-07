@@ -29,7 +29,7 @@ func (c CSVService) GetData() ([][]string, error) {
 }
 
 func (c CSVService) WriteALLData(records [][]string) error {
-	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err.Error())
 		return errors.New("an error ocurred while opening the csv file")
@@ -49,7 +49,7 @@ func (c CSVService) WriteALLData(records [][]string) error {
 }
 
 func (c CSVService) WriteRowData(record []string) error {
-	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Println(err.Error())
 		return errors.New("an error ocurred while opening the csv file")
@@ -65,14 +65,12 @@ func (c CSVService) WriteRowData(record []string) error {
 }
 
 // ValidateFile - Reads file from a given path, returns the if  to the file or error
-func (c CSVService) ValidateFile() error {
+func (c CSVService) ValidateFile() {
 	file, err := os.Open(c.file)
 	if err != nil {
-		log.Println(err.Error())
-		return err
+		log.Fatal(err.Error())
 	}
 	defer file.Close()
-	return nil
 }
 
 // readFile Reads the file and retunrs the data

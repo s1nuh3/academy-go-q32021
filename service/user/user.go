@@ -12,29 +12,20 @@ import (
 
 //Repository - To implment the repository over CSV File
 type Repository struct {
-	c   CSV
-	err error
+	c CSV
 }
 
 type CSV interface {
 	GetData() ([][]string, error)
 	WriteALLData(records [][]string) error
 	WriteRowData(record []string) error
-	ValidateFile() error
+	ValidateFile()
 }
 
 //NewRepo - Creates the a new repository implementation
 func New(c CSV) *Repository {
-	err := c.ValidateFile()
-
-	if err != nil {
-		return &Repository{
-			c:   c,
-			err: err,
-		}
-	}
-
-	return &Repository{c: c, err: nil}
+	c.ValidateFile()
+	return &Repository{c: c}
 }
 
 //Create an user
