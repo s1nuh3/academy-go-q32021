@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"log"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -17,8 +19,18 @@ type CSVServiceTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *CSVServiceTestSuite) SetupTest() {
-	repository := New("./files/usersdata.csv")
-	suite.repository = repository
+	file, err := os.Create("./files/testfile.csv")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	repository := New(file)
+	suite.repository = *repository
+}
+
+func (suite *CSVServiceTestSuite) TearDownSuite() {
+	suite.repository.file.Close()
+	os.Remove(suite.repository.file.Name())
 }
 
 // All methods that begin with "Test" are run as tests within a
@@ -31,9 +43,7 @@ func (suite *CSVServiceTestSuite) TestGetData_Positive() {
 
 func (suite *CSVServiceTestSuite) TestGetData_Negative() {
 
-	repository := New("./fiv")
-	suite.repository = repository
-
+	suite.repository.file.Close()
 	_, err := suite.repository.GetData()
 	suite.Error(err, "show error message")
 }

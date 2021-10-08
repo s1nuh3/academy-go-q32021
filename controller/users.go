@@ -13,7 +13,6 @@ import (
 type usecase interface {
 	GetUser(id int) (*model.Users, error)
 	ListUsers() (*[]model.Users, error)
-	CreateUser(name, email, gender string, status string) (model.Users, error)
 }
 
 type Controller struct {
@@ -65,6 +64,18 @@ func (c Controller) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (c Controller) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+	filterType := vars["type"]
+	if filterType == "" {
+		returnError(w, r, errors.New("type provided is not valid"), 400)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(filterType)
+
+}
 func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
 	http.Error(w, err.Error(), status)
 }

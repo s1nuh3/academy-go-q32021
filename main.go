@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/s1nuh3/academy-go-q32021/config"
 	"github.com/s1nuh3/academy-go-q32021/controller"
@@ -18,12 +19,13 @@ func main() {
 	cfg := config.ReadConfig()
 
 	log.Println("Starting")
-	file := repository.New(cfg.Csv.Path + cfg.Csv.Name)
-	userService := user.New(file)
+	cvs := OpenFile(cfg.Csv.Path + cfg.Csv.Name)
+	repo := repository.New(cvs)
+	userService := user.New(repo)
 	uc := usecase.NewUser(userService)
 	c := controller.New(uc)
 
-	client := clientAPI.New(cfg, file)
+	client := clientAPI.New(cfg, repo)
 	iu := usecase.NewConsumeAPI(client, userService)
 	ci := controller.NewImportCtrl(iu)
 
@@ -33,4 +35,14 @@ func main() {
 
 	log.Println("App running.. on port ", port)
 	log.Fatal(http.ListenAndServe(port, nil))
+}
+
+// ValidateFile - Reads file from a given path, returns the if  to the file or error
+func OpenFile(filename string) *os.File {
+	file, err := os.OpenFile(filename, os.O_RDWR, 0644)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	//defer file.Close()
+	return file
 }

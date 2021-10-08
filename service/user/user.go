@@ -3,15 +3,14 @@ package user
 import (
 	"errors"
 	"fmt"
-	"math/rand"
+	"log"
 	"strconv"
-	"time"
 
 	"github.com/s1nuh3/academy-go-q32021/model"
 )
 
-//Repository - To implment the repository over CSV File
-type Repository struct {
+//RepoImpCSV - To implment the repository over CSV File
+type RepoImpCSV struct {
 	c CSV
 }
 
@@ -19,60 +18,43 @@ type CSV interface {
 	GetData() ([][]string, error)
 	WriteALLData(records [][]string) error
 	WriteRowData(record []string) error
-	ValidateFile()
 }
 
 //NewRepo - Creates the a new repository implementation
-func New(c CSV) *Repository {
-	c.ValidateFile()
-	return &Repository{c: c}
-}
-
-//Create an user
-func (r *Repository) Create(name, email, gender string, status string) (model.Users, error) {
-	// TODO implment
-	rand.Seed(time.Now().UnixNano())
-	NewId := rand.Int()
-	nu := model.Users{
-		ID:     NewId,
-		Name:   name,
-		Email:  email,
-		Gender: gender,
-		Status: status,
-	}
-
-	return nu, nil
+func New(c CSV) *RepoImpCSV {
+	return &RepoImpCSV{c: c}
 }
 
 //Get an user
-func (r *Repository) Get(id int) (*model.Users, error) {
+func (r *RepoImpCSV) Get(id int) (*model.Users, error) {
 	return getUser(id, r.c)
 }
 
-func getUser(id int, c CSV) (*model.Users, error) {
-	u := &model.Users{}
-	rcd, err := c.GetData()
-	if err != nil {
-		return u, err
-	}
-
-	for _, r := range rcd {
-		if r[0] == strconv.Itoa(id) {
-			u, _ = parseUserRecord(r)
-			break
-		}
-	}
-	return u, nil
+//Get the list of users
+func (r *RepoImpCSV) List() (*[]model.Users, error) {
+	return listUsers(r.c)
 }
 
-//Get the list of users
-func (r *Repository) List() (*[]model.Users, error) {
-	return listUsers(r.c)
+func parseUserRecord(r []string) (*model.Users, error) {
+	id, err := strconv.Atoi(r[0])
+	if err != nil {
+		return nil, errors.New("invalid record")
+	}
+	//status, _ := strconv.ParseBool(r[4])
+	u := model.Users{
+		ID:     id,
+		Name:   r[1],
+		Email:  r[2],
+		Gender: r[3],
+		Status: r[4],
+	}
+	return &u, nil
 }
 
 func listUsers(c CSV) (*[]model.Users, error) {
 	rcd, err := c.GetData()
 	if err != nil {
+		log.Print(err.Error())
 		return nil, err
 	}
 	result, _, err := convertUsers(rcd)
@@ -90,22 +72,25 @@ func convertUsers(rcd [][]string) (*[]model.Users, int, error) {
 			u = append(u, *data)
 		}
 	}
-	fmt.Println("Files has invalid records - #total: ", invalidRecords)
+	if invalidRecords > 0 {
+		fmt.Println("Files has invalid records - #total: ", invalidRecords)
+	}
 	return &u, invalidRecords, nil
 }
 
-func parseUserRecord(r []string) (*model.Users, error) {
-	id, err := strconv.Atoi(r[0])
+func getUser(id int, c CSV) (*model.Users, error) {
+	u := &model.Users{}
+	rcd, err := c.GetData()
 	if err != nil {
-		return nil, errors.New("invalid record")
+		log.Print(err.Error())
+		return u, err
 	}
-	//status, _ := strconv.ParseBool(r[4])
-	u := model.Users{
-		ID:     id,
-		Name:   r[1],
-		Email:  r[2],
-		Gender: r[3],
-		Status: r[4],
+
+	for _, r := range rcd {
+		if r[0] == strconv.Itoa(id) {
+			u, _ = parseUserRecord(r)
+			break
+		}
 	}
-	return &u, nil
+	return u, nil
 }

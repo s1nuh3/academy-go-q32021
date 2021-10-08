@@ -22,8 +22,3 @@ func (s *UserUC) ListUsers() (*[]model.Users, error) {
 func (s *UserUC) GetUser(id int) (*model.Users, error) {
 	return s.repo.Get(id)
 }
-
-// GetUser - Returns a user by id if it's found in a csv file
-func (s *UserUC) CreateUser(name, email, gender string, status string) (model.Users, error) {
-	return s.repo.Create(name, email, gender, status)
-}

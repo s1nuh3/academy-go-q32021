@@ -6,7 +6,6 @@ import "github.com/s1nuh3/academy-go-q32021/model"
 type UserUseCase interface {
 	GetUser(id int) (*model.Users, error)
 	ListUsers() (*[]model.Users, error)
-	CreateUser(name, email, gender string, status string) (model.Users, error)
 }
 
 type Reader interface {
@@ -15,10 +14,7 @@ type Reader interface {
 }
 
 //Writer user writer
-type Writer interface {
-	Create(name, email, gender string, status string) (model.Users, error)
-	//Delete(id int) error
-}
+type Writer interface{}
 
 //Repository interface
 type Repository interface {
