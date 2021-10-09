@@ -7,26 +7,27 @@ import (
 	"github.com/s1nuh3/academy-go-q32021/model"
 )
 
-//CtrlImpUser - To implement the ConsumeAPI interface
-type UseCaseUser struct {
-	client ConsumeAPI
+//UseCaseImportUser - To implement the controller contract
+type UseCaseImportUser struct {
+	client ClientAPI
 	repo   Repository
 }
 
-//NewImport create service pass it to Controller
-func NewConsumeAPI(c ConsumeAPI, r Repository) *UseCaseUser {
-	return &UseCaseUser{
+//NewImportUser - create a new usecase to be consumed by controller, receives client api and repo
+func NewImportUser(c ClientAPI, r Repository) *UseCaseImportUser {
+	return &UseCaseImportUser{
 		client: c,
 		repo:   r,
 	}
 }
 
-// GetExternalUserCtrl - Returns a user by id if it's found in a csv file
-func (s *UseCaseUser) ImportUserCtrl(id int) (*model.Users, error) {
+//ImportUserUC - Import a new user into the CSV file, if the ID doesn't already exist
+func (s *UseCaseImportUser) ImportUserUC(id int) (*model.Users, error) {
 
 	user, err := s.repo.Get(id)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return nil, err
 	}
 	if user.ID != 0 {
 		return nil, errors.New("el ID de usuario ya existe")
@@ -34,6 +35,7 @@ func (s *UseCaseUser) ImportUserCtrl(id int) (*model.Users, error) {
 
 	user, err = s.client.ImportUser(id)
 	if err != nil {
+		log.Println(err)
 		return nil, err
 	}
 

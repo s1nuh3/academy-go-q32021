@@ -14,23 +14,22 @@ type RepoService struct {
 	c CSV
 }
 
+//CSV - Contract to access users CSV File
 type CSV interface {
 	GetData() ([][]string, error)
-	WriteALLData(records [][]string) error
-	WriteRowData(record []string) error
 }
 
-//NewRepo - Creates the a new repository implementation
+//New - Creates an new instance to a access Users, receive repo csv
 func New(c CSV) *RepoService {
 	return &RepoService{c: c}
 }
 
-//Get an user
+//Get - Returns a user by ID if it's found
 func (r *RepoService) Get(id int) (*model.Users, error) {
 	return getUser(id, r.c)
 }
 
-//Get the list of users
+//List - Returns the complete list of users
 func (r *RepoService) List() (*[]model.Users, error) {
 	return listUsers(r.c)
 }

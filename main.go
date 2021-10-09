@@ -17,19 +17,17 @@ import (
 func main() {
 
 	cfg := config.ReadConfig()
-
-	log.Println("Starting")
 	cvs := OpenFile(cfg.Csv.Path + cfg.Csv.Name)
 	repo := repository.New(cvs)
 	userService := user.New(repo)
-	uc := usecase.NewUser(userService)
-	c := controller.New(uc)
+	userUseCase := usecase.NewUser(userService)
+	userhandlers := controller.NewUser(userUseCase)
 
 	client := clientAPI.New(cfg, repo)
-	iu := usecase.NewConsumeAPI(client, userService)
-	ci := controller.NewImportHandler(iu)
+	imporUserUseCase := usecase.NewImportUser(client, userService)
+	importHandlers := controller.NewImportHandler(imporUserUseCase)
 
-	r := routes.New(c, ci)
+	r := routes.New(userhandlers, importHandlers)
 	port := cfg.Server.Port
 	http.HandleFunc("/", r.ServeHTTP)
 
@@ -37,7 +35,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 
-// ValidateFile - Reads file from a given path, returns the if  to the file or error
+// OpenFile - Reads file from a given path, returns it os.file or error
 func OpenFile(filename string) *os.File {
 	file, err := os.OpenFile(filename, os.O_RDWR, 0644)
 	if err != nil {

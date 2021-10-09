@@ -6,28 +6,32 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	"github.com/s1nuh3/academy-go-q32021/model"
+
+	"github.com/gorilla/mux"
 )
 
-type usecase interface {
+//UseCaseUser - Interface to be implemented on usecase layer
+type UseCaseUser interface {
 	GetUser(id int) (*model.Users, error)
 	ListUsers() (*[]model.Users, error)
 }
 
-type Controller struct {
-	us usecase
+//UserHandler - Struc to implement the user handlers
+type UserHandler struct {
+	ucu UseCaseUser
 }
 
-func New(u usecase) Controller {
-	return Controller{u}
+//NewUser - Creates a new instance of handlers for the user paths
+func NewUser(ucu UseCaseUser) UserHandler {
+	return UserHandler{ucu}
 
 }
 
 // GetUsers - Returns the list of users
-func (c Controller) GetUsers(w http.ResponseWriter, r *http.Request) {
+func (uh UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 
-	u, err := c.us.ListUsers()
+	u, err := uh.ucu.ListUsers()
 	if err != nil {
 		returnError(w, r, err, 500)
 	}
@@ -42,7 +46,7 @@ func (c Controller) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUsersbyId - Look up for a user id
-func (c Controller) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
+func (c UserHandler) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -50,7 +54,7 @@ func (c Controller) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 		returnError(w, r, errors.New("ID provided is not valid"), 400)
 		return
 	}
-	u, err := c.us.GetUser(id)
+	u, err := c.ucu.GetUser(id)
 	if err != nil {
 		returnError(w, r, err, 500)
 		return
@@ -64,7 +68,8 @@ func (c Controller) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (c Controller) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
+//ConcurrentRead - Read concurrently the users file
+func (c UserHandler) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	filterType := vars["type"]
@@ -94,6 +99,12 @@ func (c Controller) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(filterType + strconv.Itoa(i) + strconv.Itoa(ipw))
 
 }
+
+//IndexHandler - Handles the calls to the root path of the server
+func (c UserHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode("Welcome, this Go Rest API is to fullfill the Wizeline Academy Go Bootcamp!!")
+}
+
 func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
 	http.Error(w, err.Error(), status)
 }

@@ -5,11 +5,10 @@ import (
 	"log"
 	"os"
 
-	//"github.com/davecgh/go-spew/spew"
-
 	"github.com/spf13/viper"
 )
 
+//Config - struct to storage the configuration from the file conf
 type Config struct {
 	Csv struct {
 		Path string
@@ -24,14 +23,14 @@ type Config struct {
 	}
 }
 
-var C Config
+var c Config
 
+//ReadConfig - Reads the configuration from the file and storage it on the struct
 func ReadConfig() Config {
-	Config := &C
+	Config := &c
 
 	viper.SetConfigName("config")
 	viper.SetConfigType("yml")
-	//viper.AddConfigPath(filepath.Join("$GOPATH", "src", "github.com", "s1nuh3", "academy-go-q32021", "config"))
 	viper.AddConfigPath("./config")
 	viper.AutomaticEnv()
 
@@ -46,5 +45,4 @@ func ReadConfig() Config {
 	}
 
 	return *Config
-	//spew.Dump(C)
 }

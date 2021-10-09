@@ -2,26 +2,18 @@ package usecase
 
 import "github.com/s1nuh3/academy-go-q32021/model"
 
-//UseCase interface
-type UserUseCase interface {
-	GetUser(id int) (*model.Users, error)
-	ListUsers() (*[]model.Users, error)
-}
-
+//Reader interface
 type Reader interface {
 	Get(id int) (*model.Users, error)
 	List() (*[]model.Users, error)
 }
 
-//Writer user writer
-type Writer interface{}
-
 //Repository interface
 type Repository interface {
 	Reader
-	Writer
 }
 
-type ConsumeAPI interface {
+//ClientAPI interface
+type ClientAPI interface {
 	ImportUser(id int) (*model.Users, error)
 }
