@@ -27,7 +27,7 @@ func main() {
 
 	client := clientAPI.New(cfg, repo)
 	iu := usecase.NewConsumeAPI(client, userService)
-	ci := controller.NewImportCtrl(iu)
+	ci := controller.NewImportHandler(iu)
 
 	r := routes.New(c, ci)
 	port := cfg.Server.Port

@@ -14,7 +14,7 @@ type Controller interface {
 }
 
 type RouteImportInterface interface {
-	ImportUserRte(w http.ResponseWriter, r *http.Request)
+	ImportHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func New(c Controller, ci RouteImportInterface) *mux.Router {
@@ -22,8 +22,13 @@ func New(c Controller, ci RouteImportInterface) *mux.Router {
 	r.HandleFunc("/", c.IndexHandler).Methods("GET")
 	r.HandleFunc("/users", c.GetUsers).Methods("GET")
 	r.HandleFunc("/users/{id}", c.GetUsersbyId).Methods("GET")
-	r.HandleFunc("/users/import/{id}", ci.ImportUserRte).Methods("GET")
+	r.HandleFunc("/users/import/{id}", ci.ImportHandler).Methods("GET")
 	r.HandleFunc("/users/read/", c.ConcurrentRead).
-		Queries("type", "{type:(?:odd|even)}", "items", "{items:[0-9]+}", "items_per_worker", "{items_per_worker:[0-9]+}")
+		Queries("type", "{type:(?:odd|even)}", "items", "{items:[0-9]+}", "items_per_worker", "{items_per_worker:[0-9]+}").Methods("GET")
+	r.HandleFunc("/users/read/", c.ConcurrentRead).
+		Queries("type", "{type:(?:odd|even)}", "items", "{items:[0-9]+}").Methods("GET")
+	r.HandleFunc("/users/read/", c.ConcurrentRead).
+		Queries("type", "{type:(?:odd|even)}").Methods("GET")
+	r.HandleFunc("/users/read/", c.ConcurrentRead).Methods("GET")
 	return r
 }

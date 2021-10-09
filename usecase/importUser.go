@@ -8,21 +8,21 @@ import (
 )
 
 //CtrlImpUser - To implement the ConsumeAPI interface
-type CtrlImpUser struct {
+type UseCaseUser struct {
 	client ConsumeAPI
 	repo   Repository
 }
 
 //NewImport create service pass it to Controller
-func NewConsumeAPI(c ConsumeAPI, r Repository) *CtrlImpUser {
-	return &CtrlImpUser{
+func NewConsumeAPI(c ConsumeAPI, r Repository) *UseCaseUser {
+	return &UseCaseUser{
 		client: c,
 		repo:   r,
 	}
 }
 
 // GetExternalUserCtrl - Returns a user by id if it's found in a csv file
-func (s *CtrlImpUser) ImportUserCtrl(id int) (*model.Users, error) {
+func (s *UseCaseUser) ImportUserCtrl(id int) (*model.Users, error) {
 
 	user, err := s.repo.Get(id)
 	if err != nil {

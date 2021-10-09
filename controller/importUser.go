@@ -14,16 +14,16 @@ type CtrlImportInterface interface {
 	ImportUserCtrl(id int) (*model.Users, error)
 }
 
-type CtrlImportUser struct {
+type ImportHandler struct {
 	us CtrlImportInterface
 }
 
-func NewImportCtrl(u CtrlImportInterface) CtrlImportUser {
-	return CtrlImportUser{u}
+func NewImportHandler(u CtrlImportInterface) ImportHandler {
+	return ImportHandler{u}
 }
 
 // GetUsersbyId - Look up for a user id
-func (c CtrlImportUser) ImportUserRte(w http.ResponseWriter, r *http.Request) {
+func (c ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])

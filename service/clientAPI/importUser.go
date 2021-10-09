@@ -72,17 +72,6 @@ func unmarshalResponse(bodyBytes []byte) extUser {
 }
 
 func request(cm ClientMyAPI, id int) []byte {
-	// cl := &http.Client{}
-	// //fmt.Println("Host: ", cm.host)
-	// req, err := http.NewRequest("GET", cm.host+"/users/"+strconv.Itoa(id), nil)
-	// if err != nil {
-	// 	fmt.Print(err.Error())
-	// }
-	// //fmt.Printf("Req: %v\n", req)
-	// req.Header.Add("Accept", "application/json")
-	// req.Header.Add("Content-Type", "application/json")
-	// resp, err := cl.Do(req)
-	//i := strconv.Itoa(id)
 	resp, err := cm.client.R().
 		SetPathParam("id", strconv.Itoa(id)).
 		SetHeader("Accept", "application/json").

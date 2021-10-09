@@ -9,8 +9,8 @@ import (
 	"github.com/s1nuh3/academy-go-q32021/model"
 )
 
-//RepoImpCSV - To implment the repository over CSV File
-type RepoImpCSV struct {
+//RepoService - To implment the repository over CSV File
+type RepoService struct {
 	c CSV
 }
 
@@ -21,17 +21,17 @@ type CSV interface {
 }
 
 //NewRepo - Creates the a new repository implementation
-func New(c CSV) *RepoImpCSV {
-	return &RepoImpCSV{c: c}
+func New(c CSV) *RepoService {
+	return &RepoService{c: c}
 }
 
 //Get an user
-func (r *RepoImpCSV) Get(id int) (*model.Users, error) {
+func (r *RepoService) Get(id int) (*model.Users, error) {
 	return getUser(id, r.c)
 }
 
 //Get the list of users
-func (r *RepoImpCSV) List() (*[]model.Users, error) {
+func (r *RepoService) List() (*[]model.Users, error) {
 	return listUsers(r.c)
 }
 

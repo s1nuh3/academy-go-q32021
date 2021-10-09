@@ -68,12 +68,30 @@ func (c Controller) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	filterType := vars["type"]
+	items := vars["items"]
+	items_per_worker := vars["items_per_worker"]
+	//fmt.Println("Type: " + filterType + " Items: " + items + " Items x Worker: " + items_per_worker)
+
 	if filterType == "" {
 		returnError(w, r, errors.New("type provided is not valid"), 400)
 		return
 	}
+	i, err := strconv.Atoi(items)
+	if err != nil {
+		i = 100
+	}
+	ipw, err := strconv.Atoi(items_per_worker)
+	if err != nil {
+		ipw = 50
+	}
+
+	if ipw > i {
+		returnError(w, r, errors.New("items per worker can't be higher than items"), 400)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(filterType)
+	json.NewEncoder(w).Encode(filterType + strconv.Itoa(i) + strconv.Itoa(ipw))
 
 }
 func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
