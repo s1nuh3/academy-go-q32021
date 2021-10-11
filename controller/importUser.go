@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -32,19 +31,43 @@ func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		returnError(w, r, errors.New("ID provided is not valid"), 400)
+		w.WriteHeader(http.StatusBadRequest)
+		json, err := json.Marshal("ID provided is not valid")
+		if err != nil {
+			returnError(w, r, err, 500)
+			return
+		}
+		w.Write(json)
 		return
 	}
 	u, err := ih.uci.ImportUserUC(id)
 	if err != nil {
-		returnError(w, r, err, 500)
+		w.WriteHeader(http.StatusNotFound)
+		json, err := json.Marshal(err.Error())
+		if err != nil {
+			returnError(w, r, err, 500)
+			return
+		}
+		w.Write(json)
 		return
 	}
 	if u.ID == 0 {
 		w.WriteHeader(http.StatusNotFound)
+		json, err := json.Marshal("ID not found in external API")
+		if err != nil {
+			returnError(w, r, err, 500)
+			return
+		}
+		w.Write(json)
+		return
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(u)
+		json, err := json.Marshal(u)
+		if err != nil {
+			returnError(w, r, err, 500)
+			return
+		}
+		w.Write(json)
 	}
 
 }

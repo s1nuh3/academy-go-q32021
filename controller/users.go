@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -37,10 +38,16 @@ func (uh UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if len(*u) != 0 {
-		json.NewEncoder(w).Encode(u)
+		err = json.NewEncoder(w).Encode(u)
+		if err != nil {
+			returnError(w, r, err, 500)
+		}
 		return
 	} else {
-		jso, _ := json.Marshal([]int{})
+		jso, err := json.Marshal([]int{})
+		if err != nil {
+			returnError(w, r, err, 500)
+		}
 		w.Write(jso)
 	}
 }
@@ -63,7 +70,10 @@ func (c UserHandler) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(u)
+		err = json.NewEncoder(w).Encode(u)
+		if err != nil {
+			returnError(w, r, err, 500)
+		}
 	}
 
 }
@@ -96,15 +106,21 @@ func (c UserHandler) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(filterType + strconv.Itoa(i) + strconv.Itoa(ipw))
-
+	err = json.NewEncoder(w).Encode(filterType + strconv.Itoa(i) + strconv.Itoa(ipw))
+	if err != nil {
+		returnError(w, r, err, 500)
+	}
 }
 
 //IndexHandler - Handles the calls to the root path of the server
 func (c UserHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode("Welcome, this Go Rest API is to fullfill the Wizeline Academy Go Bootcamp!!")
+	err := json.NewEncoder(w).Encode("Welcome, this Go Rest API is to fullfill the Wizeline Academy Go Bootcamp!!")
+	if err != nil {
+		returnError(w, r, err, 500)
+	}
 }
 
 func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
+	log.Println(err.Error())
 	http.Error(w, err.Error(), status)
 }
