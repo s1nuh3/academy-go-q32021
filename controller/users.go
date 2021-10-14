@@ -18,6 +18,8 @@ type UseCaseUser interface {
 	ListUsers() (*[]model.Users, error)
 }
 
+//UseCaseGoRoutines - Interface to be implemented on usecase layer
+
 //UserHandler - Struc to implement the user handlers
 type UserHandler struct {
 	ucu UseCaseUser
@@ -26,44 +28,41 @@ type UserHandler struct {
 //NewUser - Creates a new instance of handlers for the user paths
 func NewUser(ucu UseCaseUser) UserHandler {
 	return UserHandler{ucu}
-
 }
 
 // GetUsers - Returns the list of users
-func (uh UserHandler) GetUsers(w http.ResponseWriter, r *http.Request) {
-
+func (uh UserHandler) GetUsersHdl(w http.ResponseWriter, r *http.Request) {
 	u, err := uh.ucu.ListUsers()
 	if err != nil {
-		returnError(w, r, err, 500)
+		returnError(w, r, err, http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if len(*u) != 0 {
 		err = json.NewEncoder(w).Encode(u)
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 		}
 		return
 	} else {
 		jso, err := json.Marshal([]int{})
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 		}
 		w.Write(jso)
 	}
 }
 
 // GetUsersbyId - Look up for a user id
-func (c UserHandler) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
-
+func (c UserHandler) GetUsersbyIdHdl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		returnError(w, r, errors.New("ID provided is not valid"), 400)
+		returnError(w, r, errors.New("ID provided is not valid"), http.StatusBadRequest)
 		return
 	}
 	u, err := c.ucu.GetUser(id)
 	if err != nil {
-		returnError(w, r, err, 500)
+		returnError(w, r, err, http.StatusInternalServerError)
 		return
 	}
 	if u.ID == 0 {
@@ -72,51 +71,16 @@ func (c UserHandler) GetUsersbyId(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(u)
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 		}
-	}
-
-}
-
-//ConcurrentRead - Read concurrently the users file
-func (c UserHandler) ConcurrentRead(w http.ResponseWriter, r *http.Request) {
-
-	vars := mux.Vars(r)
-	filterType := vars["type"]
-	items := vars["items"]
-	items_per_worker := vars["items_per_worker"]
-	//fmt.Println("Type: " + filterType + " Items: " + items + " Items x Worker: " + items_per_worker)
-
-	if filterType == "" {
-		returnError(w, r, errors.New("type provided is not valid"), 400)
-		return
-	}
-	i, err := strconv.Atoi(items)
-	if err != nil {
-		i = 100
-	}
-	ipw, err := strconv.Atoi(items_per_worker)
-	if err != nil {
-		ipw = 50
-	}
-
-	if ipw > i {
-		returnError(w, r, errors.New("items per worker can't be higher than items"), 400)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(filterType + strconv.Itoa(i) + strconv.Itoa(ipw))
-	if err != nil {
-		returnError(w, r, err, 500)
 	}
 }
 
 //IndexHandler - Handles the calls to the root path of the server
-func (c UserHandler) IndexHandler(w http.ResponseWriter, r *http.Request) {
+func (c UserHandler) IndexHdl(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode("Welcome, this Go Rest API is to fullfill the Wizeline Academy Go Bootcamp!!")
 	if err != nil {
-		returnError(w, r, err, 500)
+		returnError(w, r, err, http.StatusInternalServerError)
 	}
 }
 

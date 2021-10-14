@@ -34,7 +34,8 @@ func (r *RepoService) List() (*[]model.Users, error) {
 	return listUsers(r.c)
 }
 
-func parseUserRecord(r []string) (*model.Users, error) {
+//ParseUserRecord -- Parse a slice of string into a user model strct
+func ParseUserRecord(r []string) (*model.Users, error) {
 	id, err := strconv.Atoi(r[0])
 	if err != nil {
 		return nil, errors.New("invalid record")
@@ -64,7 +65,7 @@ func convertUsers(rcd [][]string) (*[]model.Users, int, error) {
 	var invalidRecords int
 	var u []model.Users
 	for _, r := range rcd {
-		data, err := parseUserRecord(r)
+		data, err := ParseUserRecord(r)
 		if err != nil {
 			invalidRecords++
 		} else {
@@ -87,7 +88,7 @@ func getUser(id int, c CSV) (*model.Users, error) {
 
 	for _, r := range rcd {
 		if r[0] == strconv.Itoa(id) {
-			u, _ = parseUserRecord(r)
+			u, _ = ParseUserRecord(r)
 			break
 		}
 	}

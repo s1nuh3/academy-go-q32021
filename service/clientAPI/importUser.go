@@ -40,7 +40,6 @@ func New(cg config.Config, c CSV) ClientService {
 
 //ImportUser - Applies the bussiness rules to import a new user form a client API into the CSV file
 func (c ClientService) ImportUser(id int) (*model.Users, error) {
-
 	resp := request(c, id)
 	responseObject := unmarshalResponse(resp)
 	err := writeToCSV(responseObject, c)

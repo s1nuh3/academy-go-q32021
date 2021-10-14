@@ -26,7 +26,7 @@ func NewImportHandler(ui UseCaseImportUser) ImportHandler {
 }
 
 // ImportHandler - Handles the call to import a new user
-func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
+func (ih ImportHandler) ImportHdl(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
@@ -34,7 +34,7 @@ func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		json, err := json.Marshal("ID provided is not valid")
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(json)
@@ -45,7 +45,7 @@ func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		json, err := json.Marshal(err.Error())
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(json)
@@ -55,7 +55,7 @@ func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		json, err := json.Marshal("ID not found in external API")
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(json)
@@ -64,7 +64,7 @@ func (ih ImportHandler) ImportHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json, err := json.Marshal(u)
 		if err != nil {
-			returnError(w, r, err, 500)
+			returnError(w, r, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(json)

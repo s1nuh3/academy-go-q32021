@@ -11,6 +11,7 @@ import (
 	"github.com/s1nuh3/academy-go-q32021/routes"
 	"github.com/s1nuh3/academy-go-q32021/service/clientAPI"
 	"github.com/s1nuh3/academy-go-q32021/service/user"
+	"github.com/s1nuh3/academy-go-q32021/service/workerpool"
 	"github.com/s1nuh3/academy-go-q32021/usecase"
 )
 
@@ -21,17 +22,22 @@ func main() {
 	repo := repository.New(cvs)
 	userService := user.New(repo)
 	userUseCase := usecase.NewUser(userService)
-	userhandlers := controller.NewUser(userUseCase)
+	userHandlers := controller.NewUser(userUseCase)
 
 	client := clientAPI.New(cfg, repo)
 	imporUserUseCase := usecase.NewImportUser(client, userService)
 	importHandlers := controller.NewImportHandler(imporUserUseCase)
 
-	r := routes.New(userhandlers, importHandlers)
+	goRoutineSrv := workerpool.New(cvs)
+	goRoutineUseCase := usecase.NewGoRoutine(goRoutineSrv)
+	goRoutineHandler := controller.NewGoRoutine(goRoutineUseCase)
+
+	r := routes.New(userHandlers, importHandlers, goRoutineHandler)
 	port := cfg.Server.Port
 	http.HandleFunc("/", r.ServeHTTP)
 
 	log.Println("App running.. on port ", port)
+
 	log.Fatal(http.ListenAndServe(port, nil))
 }
 

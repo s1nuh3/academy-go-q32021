@@ -101,7 +101,7 @@ func TestImportHandler(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 			r := mux.NewRouter()
-			r.HandleFunc("/user/import/{id}", uc.ImportHandler)
+			r.HandleFunc("/user/import/{id}", uc.ImportHdl)
 			r.ServeHTTP(rr, req)
 			assert.Equal(t, tc.httpstatus, rr.Code)
 			respBody, err := json.Marshal(tc.body)
