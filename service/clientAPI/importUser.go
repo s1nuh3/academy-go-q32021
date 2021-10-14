@@ -4,50 +4,54 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"strconv"
 
 	"github.com/s1nuh3/academy-go-q32021/config"
 	"github.com/s1nuh3/academy-go-q32021/model"
+
+	resty "github.com/go-resty/resty/v2"
 )
 
-//ClientMyAPI - Struc to receibe Client conf
-type ClientMyAPI struct {
-	host string
-	csv  CSV
+//ClientService - Struc to implement the Client API
+type ClientService struct {
+	client resty.Client
+	csv    CSV
 }
 
+//CSV - Contract to write the imported users to CSV File
 type CSV interface {
 	WriteALLData(records [][]string) error
 	WriteRowData(record []string) error
 }
 
+// Model to deposit the response form the client API
 type extUser struct {
 	Meta interface{} `json:"meta"`
 	Data model.Users `json:"data"`
 }
 
-//NewClient - Creates the implementation for UseCase ConsumeAPI
-func New(cg config.Config, c CSV) ClientMyAPI {
-	return ClientMyAPI{host: cg.Client.Host + cg.Client.APIVer, csv: c}
+//New - Creates an instance to ConsumeAPI, receives Configuration and CSV file access, Creates the Resty Client
+func New(cg config.Config, c CSV) ClientService {
+	client := resty.New()
+	client.SetHostURL(cg.Client.Host + cg.Client.APIVer)
+	return ClientService{client: *client, csv: c}
 }
 
-func (cm ClientMyAPI) ImportUser(id int) (*model.Users, error) {
-
-	resp := request(cm, id)
+//ImportUser - Applies the bussiness rules to import a new user form a client API into the CSV file
+func (c ClientService) ImportUser(id int) (*model.Users, error) {
+	resp := request(c, id)
 	responseObject := unmarshalResponse(resp)
-	err := WriteToCSV(responseObject, cm)
+	err := writeToCSV(responseObject, c)
 	if err != nil {
 		return nil, errors.New("an error ocurred at saving imported user")
 	}
 	return &responseObject.Data, nil
 }
 
-func WriteToCSV(responseObject extUser, cm ClientMyAPI) error {
+func writeToCSV(responseObject extUser, c ClientService) error {
 	if responseObject.Data.ID != 0 && responseObject.Data.Email != "" {
-		err := cm.csv.WriteRowData([]string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
+		err := c.csv.WriteRowData([]string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
 		if err != nil {
 			log.Print(err.Error())
 			return err
@@ -69,28 +73,19 @@ func unmarshalResponse(bodyBytes []byte) extUser {
 	return responseObject
 }
 
-func request(cm ClientMyAPI, id int) []byte {
-	cl := &http.Client{}
-	//fmt.Println("Host: ", cm.host)
-	req, err := http.NewRequest("GET", cm.host+"/users/"+strconv.Itoa(id), nil)
-	if err != nil {
-		fmt.Print(err.Error())
-	}
-	//fmt.Printf("Req: %v\n", req)
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := cl.Do(req)
-	if err != nil {
-		fmt.Print(err.Error())
-		return []byte{}
-	}
-	defer resp.Body.Close()
+func request(c ClientService, id int) []byte {
+	resp, err := c.client.R().
+		SetPathParam("id", strconv.Itoa(id)).
+		SetHeader("Accept", "application/json").
+		SetHeader("Content-Type", "application/json").
+		Get("/users/{id}")
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Print(err.Error())
 		return []byte{}
 	}
+
+	bodyBytes := resp.Body()
 
 	return bodyBytes
 }

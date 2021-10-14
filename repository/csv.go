@@ -8,39 +8,29 @@ import (
 	"os"
 )
 
+//CSVService - Struc to implement the interfaces that access csv file
 type CSVService struct {
-	file string
+	file *os.File
 }
 
-func New(filename string) CSVService {
-	return CSVService{file: filename}
+//New - Creates a new instance to access a csv file, recieves the os file
+func New(file *os.File) *CSVService {
+	return &CSVService{file: file}
 }
 
 // GetData - Reads file from a given path, returns the slice of records
 func (c CSVService) GetData() ([][]string, error) {
-	file, err := os.Open(c.file)
-	if err != nil {
-		log.Println(err.Error())
-		return [][]string{}, errors.New("an error ocurred while opening the csv file")
-	}
-	defer file.Close()
-
-	return readFile(file)
+	return readFile(c.file)
 }
 
+//WriteALLData - Appends a range of rows of new data to CSV File
 func (c CSVService) WriteALLData(records [][]string) error {
-	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println(err.Error())
-		return errors.New("an error ocurred while opening the csv file")
-	}
-
-	w := csv.NewWriter(file)
+	w := csv.NewWriter(c.file)
 	defer w.Flush()
 	// Using WriteAll
 	var data [][]string
 	data = append(data, records...)
-	err = w.WriteAll(data)
+	err := w.WriteAll(data)
 	if err != nil {
 		fmt.Println(err.Error())
 		return errors.New("an error ocurred while writing the csv file")
@@ -48,14 +38,9 @@ func (c CSVService) WriteALLData(records [][]string) error {
 	return nil
 }
 
+//WriteRowData - Appends a row of new data to CSV File
 func (c CSVService) WriteRowData(record []string) error {
-	file, err := os.OpenFile(c.file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Println(err.Error())
-		return errors.New("an error ocurred while opening the csv file")
-	}
-
-	w := csv.NewWriter(file)
+	w := csv.NewWriter(c.file)
 	defer w.Flush()
 	if err := w.Write(record); err != nil {
 		log.Println(err.Error())
@@ -64,19 +49,9 @@ func (c CSVService) WriteRowData(record []string) error {
 	return nil
 }
 
-// ValidateFile - Reads file from a given path, returns the if  to the file or error
-func (c CSVService) ValidateFile() error {
-	file, err := os.Open(c.file)
-	if err != nil {
-		log.Println(err.Error())
-		return err
-	}
-	defer file.Close()
-	return nil
-}
-
-// readFile Reads the file and retunrs the data
+//readFile Reads the file and retunrs the data
 func readFile(file *os.File) ([][]string, error) {
+	file.Seek(0, 0)
 	Records, err := csv.NewReader(file).ReadAll()
 	if err != nil {
 		log.Println(err.Error())
