@@ -31,15 +31,15 @@ func New(file *os.File) *GoRoutineService {
 
 //WorkPool - Creates an concrete workpool of go routines to procces the read lines in a cvs file using channels
 func (gs GoRoutineService) WorkPool(filter, items, itemsPerWorker, workers int) (*[]model.Users, error) {
+	var u []model.Users
+	var wg sync.WaitGroup
 	fcsv := csv.NewReader(gs.file)
 	_, err := gs.file.Seek(0, 0)
 	if err != nil {
-		log.Printf("An error happend at file: %v", err)
+		return &u, fmt.Errorf("an error happend at file: %w", err)
 	}
 	rs := make(chan *model.Users)
 	lines := make(chan []string)
-	var u []model.Users
-	var wg sync.WaitGroup
 
 	loads := calculateWorkLoad(workers, itemsPerWorker, items)
 	wg.Add(workers)
@@ -63,6 +63,7 @@ func (gs GoRoutineService) WorkPool(filter, items, itemsPerWorker, workers int) 
 	return &u, nil
 }
 
+//calculateWorkLoad - Assings each worker the amount of jobs to take, makes sure no extra job is assigned
 func calculateWorkLoad(workers int, itemsPerWorker int, items int) []LoadBalancer {
 	extraItems := (workers * itemsPerWorker) - items
 	var loads []LoadBalancer

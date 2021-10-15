@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -43,6 +44,7 @@ func (ih ImportHandler) ImportHdl(w http.ResponseWriter, r *http.Request) {
 	u, err := ih.uci.ImportUserUC(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		log.Println(err.Error())
 		json, err := json.Marshal(err.Error())
 		if err != nil {
 			returnError(w, r, err, http.StatusInternalServerError)

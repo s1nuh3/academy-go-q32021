@@ -13,9 +13,7 @@ type UseCaseGoRoutine struct {
 
 //NewGoRoutine - Creates an new instance to be cosumen at handler
 func NewGoRoutine(gr GoRoutine) *UseCaseGoRoutine {
-	return &UseCaseGoRoutine{
-		gr: gr,
-	}
+	return &UseCaseGoRoutine{gr: gr}
 }
 
 // ListUsers - Returns a colection of model.users from a csv file

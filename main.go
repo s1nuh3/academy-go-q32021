@@ -68,6 +68,5 @@ func openFile(filename string) *os.File {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	//defer file.Close()
 	return file
 }

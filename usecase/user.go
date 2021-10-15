@@ -9,9 +9,7 @@ type UseCaseUser struct {
 
 //NewService - Creates an new instance to be cosumen at handler
 func NewUser(r Repository) *UseCaseUser {
-	return &UseCaseUser{
-		repo: r,
-	}
+	return &UseCaseUser{repo: r}
 }
 
 // ListUsers - Returns a colection of model.users from a csv file

@@ -30,7 +30,6 @@ func (c CSVService) GetData() ([][]string, error) {
 func (c CSVService) WriteALLData(records [][]string) error {
 	w := csv.NewWriter(c.file)
 	defer w.Flush()
-	// Using WriteAll
 	var data [][]string
 	data = append(data, records...)
 	err := w.WriteAll(data)

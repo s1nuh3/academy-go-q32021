@@ -40,7 +40,7 @@ func New(cg config.Config, c CSV) ClientService {
 	return ClientService{client: *client, csv: c}
 }
 
-//ImportUser - Applies the bussiness rules to import a new user form a client API into the CSV file
+//ImportUser - Call the external client to obtain a new User, and saves it into the CSV file
 func (c ClientService) ImportUser(id int) (*model.Users, error) {
 	resp, err := request(c, id)
 	if err != nil {
@@ -57,6 +57,8 @@ func (c ClientService) ImportUser(id int) (*model.Users, error) {
 	return &responseObject.Data, nil
 }
 
+//writeToCSV - Recieves an model of extUser, and the struc with the csv objeto to write to CSV file
+// returns an error if present
 func writeToCSV(responseObject extUser, c ClientService) error {
 	if responseObject.Data.ID != 0 && responseObject.Data.Email != "" {
 		err := c.csv.WriteRowData([]string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
@@ -67,6 +69,8 @@ func writeToCSV(responseObject extUser, c ClientService) error {
 	return nil
 }
 
+//unmarshalResponse - This converts the byte response into the model extUser thar retuns or error
+//if present
 func unmarshalResponse(bodyBytes []byte) (extUser, error) {
 	var responseObject extUser
 	err := json.Unmarshal(bodyBytes, &responseObject)
@@ -76,6 +80,8 @@ func unmarshalResponse(bodyBytes []byte) (extUser, error) {
 	return responseObject, nil
 }
 
+//request - Using Resty client make the call to the server- returns the bytes of the response or
+// an error if present
 func request(c ClientService, id int) ([]byte, error) {
 	resp, err := c.client.R().
 		SetPathParam("id", strconv.Itoa(id)).
