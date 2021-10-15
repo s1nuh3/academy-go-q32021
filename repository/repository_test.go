@@ -35,14 +35,12 @@ func (suite *CSVServiceTestSuite) TearDownSuite() {
 
 //TestGetData_Positive - Test correct access to file
 func (suite *CSVServiceTestSuite) TestGetData_Positive() {
-
 	_, err := suite.repository.GetData()
 	suite.NoError(err, "no error when getting data")
 }
 
 //TestGetData_Negative - Test no access to file
 func (suite *CSVServiceTestSuite) TestGetData_Negative() {
-
 	suite.repository.file.Close()
 	_, err := suite.repository.GetData()
 	suite.Error(err, "show error message")

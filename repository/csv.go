@@ -2,10 +2,13 @@ package repository
 
 import (
 	"encoding/csv"
-	"errors"
 	"fmt"
-	"log"
 	"os"
+)
+
+const (
+	ErrWritingFile = "an error ocurred while writing the csv file"
+	ErrReadingFile = "an error ocurred while reading the csv file"
 )
 
 //CSVService - Struc to implement the interfaces that access csv file
@@ -32,8 +35,7 @@ func (c CSVService) WriteALLData(records [][]string) error {
 	data = append(data, records...)
 	err := w.WriteAll(data)
 	if err != nil {
-		fmt.Println(err.Error())
-		return errors.New("an error ocurred while writing the csv file")
+		return fmt.Errorf(ErrWritingFile+" %w", err)
 	}
 	return nil
 }
@@ -43,19 +45,20 @@ func (c CSVService) WriteRowData(record []string) error {
 	w := csv.NewWriter(c.file)
 	defer w.Flush()
 	if err := w.Write(record); err != nil {
-		log.Println(err.Error())
-		return errors.New("an error ocurred while writing the csv file")
+		return fmt.Errorf(ErrWritingFile+" %w", err)
 	}
 	return nil
 }
 
 //readFile Reads the file and retunrs the data
 func readFile(file *os.File) ([][]string, error) {
-	file.Seek(0, 0)
+	_, err := file.Seek(0, 0)
+	if err != nil {
+		return [][]string{}, fmt.Errorf(ErrReadingFile+" %w", err)
+	}
 	Records, err := csv.NewReader(file).ReadAll()
 	if err != nil {
-		log.Println(err.Error())
-		return [][]string{}, errors.New("an error ocurred while reading the csv file")
+		return [][]string{}, fmt.Errorf(ErrReadingFile+" %w", err)
 	}
 	return Records, nil
 }

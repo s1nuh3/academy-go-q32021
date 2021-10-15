@@ -11,10 +11,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
+//UseCaseGoRoutine - Contract for the usecase for this handler
 type UseCaseGoRoutine interface {
 	ReadConcurrent(filter, items, itemsPerWorker int) (*[]model.Users, error)
 }
 
+//GoRoutineHandler - Struc to implement the contract for routing
 type GoRoutineHandler struct {
 	ur UseCaseGoRoutine
 }
@@ -31,7 +33,7 @@ func (gr GoRoutineHandler) GoRoutineHdl(w http.ResponseWriter, r *http.Request) 
 	items := vars["items"]
 	itemsPerWorker := vars["items_per_worker"]
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", ContentTypeJsonApp)
 
 	if filterType == "" {
 		returnError(w, r, errors.New("type provided is not valid"), http.StatusBadRequest)

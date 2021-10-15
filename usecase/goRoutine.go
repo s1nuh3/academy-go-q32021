@@ -11,7 +11,7 @@ type UseCaseGoRoutine struct {
 	gr GoRoutine
 }
 
-//NewGoRoutine create service for user usecase
+//NewGoRoutine - Creates an new instance to be cosumen at handler
 func NewGoRoutine(gr GoRoutine) *UseCaseGoRoutine {
 	return &UseCaseGoRoutine{
 		gr: gr,

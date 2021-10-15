@@ -13,8 +13,15 @@ import (
 	"github.com/s1nuh3/academy-go-q32021/service/user"
 )
 
+//GoRoutineService - Implementacion for the Contrac to call the workpool
 type GoRoutineService struct {
 	file *os.File
+}
+
+//LoadBalancer - Struck to pass the worker ID and load ( items to proccess)
+type LoadBalancer struct {
+	worker int
+	load   int
 }
 
 //New - Creates an new instance to a access Users, receive repo csv
@@ -24,35 +31,55 @@ func New(file *os.File) *GoRoutineService {
 
 //WorkPool - Creates an concrete workpool of go routines to procces the read lines in a cvs file using channels
 func (gs GoRoutineService) WorkPool(filter, items, itemsPerWorker, workers int) (*[]model.Users, error) {
-	gs.file.Seek(0, 0)
 	fcsv := csv.NewReader(gs.file)
+	_, err := gs.file.Seek(0, 0)
+	if err != nil {
+		log.Printf("An error happend at file: %v", err)
+	}
 	rs := make(chan *model.Users)
 	lines := make(chan []string)
+	var u []model.Users
 	var wg sync.WaitGroup
-	for w := 1; w <= workers; w++ {
-		wg.Add(1)
-		fmt.Printf("Launch Worker [%d] \n", w)
+
+	loads := calculateWorkLoad(workers, itemsPerWorker, items)
+	wg.Add(workers)
+	fmt.Printf("Starting [%d] Workers  \n", workers)
+	for w := 0; w < workers; w++ {
 		go func(ID, task int, lines <-chan []string, rs chan<- *model.Users, wg *sync.WaitGroup) {
-			GetRecords(ID, filter, itemsPerWorker, lines, rs, wg)
+			GetRecords(loads[ID], filter, lines, rs, wg)
 		}(w, itemsPerWorker, lines, rs, &wg)
 	}
-
 	go ReadCSVLines(fcsv, lines)
 
 	go func() {
 		wg.Wait()
 		close(rs)
+		fmt.Printf("Workerpool finished \n")
 	}()
-	var u []model.Users
-	for i := 1; i <= items; i++ {
-		user, ok := <-rs
-		if !ok {
-			break
-		}
+
+	for user := range rs {
 		u = append(u, *user)
-		//fmt.Printf("Job %v has been finished with result ID %v\n", i, res.ID)
 	}
 	return &u, nil
+}
+
+func calculateWorkLoad(workers int, itemsPerWorker int, items int) []LoadBalancer {
+	extraItems := (workers * itemsPerWorker) - items
+	var loads []LoadBalancer
+	for i := 0; i < workers; i++ {
+		if i == 0 && extraItems != 0 {
+			loads = append(loads, LoadBalancer{
+				worker: i,
+				load:   itemsPerWorker - extraItems,
+			})
+		} else {
+			loads = append(loads, LoadBalancer{
+				worker: i,
+				load:   itemsPerWorker,
+			})
+		}
+	}
+	return loads
 }
 
 //ReadCSVLines - Reads a cvs file and pushes it to a channel , This is meant to be run a a go routine
@@ -63,7 +90,7 @@ func ReadCSVLines(fcsv *csv.Reader, lines chan []string) {
 			break
 		}
 		if err != nil {
-			fmt.Println("ERROR: ", err.Error())
+			log.Println("ERROR: ", err.Error())
 			break
 		}
 		lines <- rStr
@@ -74,17 +101,18 @@ func ReadCSVLines(fcsv *csv.Reader, lines chan []string) {
 //GetRecords - This function acts as a worker in the workpool, fetch the channel for a string
 // parses it as a model user, validates if comply with the filter, and then pushes it to a result channel,
 // Also controls the item per worked limit
-func GetRecords(ID, filter, task int, lines <-chan []string, rs chan<- *model.Users, wg *sync.WaitGroup) {
+func GetRecords(load LoadBalancer, filter int, lines <-chan []string, rs chan<- *model.Users, wg *sync.WaitGroup) {
 	defer wg.Done()
-	//fmt.Printf("Worker %d waiting for job \n", ID)
-	completed := 1
-	if completed <= task {
-		for job := range lines {
-			fmt.Printf("Worker [%d] started inner job  [%d] \n", ID, completed)
-			aux, err := user.ParseUserRecord(job)
-			if err != nil {
-				log.Printf("Failed to Parsr User Record %v, error %v\n", job, err)
-			}
+	completed := 0
+	for job := range lines {
+		if completed == load.load {
+			fmt.Printf(" Worker [%d] Completed [%d] of [%d] \n", load.worker, completed, load.load)
+			break
+		}
+		aux, err := user.ParseUserRecord(job)
+		if err != nil {
+			log.Printf("Failed to Parse User Record %v, error %v\n", job, err)
+		} else {
 			switch filter {
 			case 0:
 				if math.Remainder(float64(aux.ID), 2) == 0 {
@@ -92,17 +120,11 @@ func GetRecords(ID, filter, task int, lines <-chan []string, rs chan<- *model.Us
 					completed++
 				}
 			case 1:
-
 				if math.Remainder(float64(aux.ID), 2) != 0 {
 					rs <- aux
 					completed++
 				}
 			}
-
-			if completed > task {
-				break
-			}
-
 		}
 	}
 }

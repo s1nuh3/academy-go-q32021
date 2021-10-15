@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -12,15 +13,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//UseCaseUser - Interface to be implemented on usecase layer
+const (
+	ContentTypeJsonApp = "application/json"
+)
+
+//UseCaseUser - Contract to be implemented on usecase layer
 type UseCaseUser interface {
 	GetUser(id int) (*model.Users, error)
 	ListUsers() (*[]model.Users, error)
 }
 
-//UseCaseGoRoutines - Interface to be implemented on usecase layer
-
-//UserHandler - Struc to implement the user handlers
+//UserHandler - Struc to implement the user handler
 type UserHandler struct {
 	ucu UseCaseUser
 }
@@ -34,19 +37,19 @@ func NewUser(ucu UseCaseUser) UserHandler {
 func (uh UserHandler) GetUsersHdl(w http.ResponseWriter, r *http.Request) {
 	u, err := uh.ucu.ListUsers()
 	if err != nil {
-		returnError(w, r, err, http.StatusInternalServerError)
+		returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 	}
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", ContentTypeJsonApp)
 	if len(*u) != 0 {
 		err = json.NewEncoder(w).Encode(u)
 		if err != nil {
-			returnError(w, r, err, http.StatusInternalServerError)
+			returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 		}
 		return
 	} else {
 		jso, err := json.Marshal([]int{})
 		if err != nil {
-			returnError(w, r, err, http.StatusInternalServerError)
+			returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 		}
 		w.Write(jso)
 	}
@@ -57,21 +60,21 @@ func (c UserHandler) GetUsersbyIdHdl(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		returnError(w, r, errors.New("ID provided is not valid"), http.StatusBadRequest)
+		returnError(w, r, fmt.Errorf("%w", errors.New("ID provided is not valid")), http.StatusBadRequest)
 		return
 	}
 	u, err := c.ucu.GetUser(id)
 	if err != nil {
-		returnError(w, r, err, http.StatusInternalServerError)
+		returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 		return
 	}
 	if u.ID == 0 {
 		w.WriteHeader(http.StatusNotFound)
 	} else {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", ContentTypeJsonApp)
 		err = json.NewEncoder(w).Encode(u)
 		if err != nil {
-			returnError(w, r, err, http.StatusInternalServerError)
+			returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 		}
 	}
 }
@@ -80,11 +83,11 @@ func (c UserHandler) GetUsersbyIdHdl(w http.ResponseWriter, r *http.Request) {
 func (c UserHandler) IndexHdl(w http.ResponseWriter, r *http.Request) {
 	err := json.NewEncoder(w).Encode("Welcome, this Go Rest API is to fullfill the Wizeline Academy Go Bootcamp!!")
 	if err != nil {
-		returnError(w, r, err, http.StatusInternalServerError)
+		returnError(w, r, fmt.Errorf("%w", err), http.StatusInternalServerError)
 	}
 }
 
 func returnError(w http.ResponseWriter, r *http.Request, err error, status int) {
-	log.Println(err.Error())
+	log.Println(fmt.Errorf("error at handlers: %w", err).Error())
 	http.Error(w, err.Error(), status)
 }

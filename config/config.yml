@@ -1,6 +1,6 @@
 csv:
   path: ./repository/files/
-  name: usersdata.csv
+  name: usersData.csv
 
 server:
   port: ":8889"

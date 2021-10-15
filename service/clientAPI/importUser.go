@@ -2,15 +2,17 @@ package clientAPI
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/s1nuh3/academy-go-q32021/config"
 	"github.com/s1nuh3/academy-go-q32021/model"
 
 	resty "github.com/go-resty/resty/v2"
+)
+
+const (
+	ContentTypeJsonApp = "application/json"
 )
 
 //ClientService - Struc to implement the Client API
@@ -40,11 +42,17 @@ func New(cg config.Config, c CSV) ClientService {
 
 //ImportUser - Applies the bussiness rules to import a new user form a client API into the CSV file
 func (c ClientService) ImportUser(id int) (*model.Users, error) {
-	resp := request(c, id)
-	responseObject := unmarshalResponse(resp)
-	err := writeToCSV(responseObject, c)
+	resp, err := request(c, id)
 	if err != nil {
-		return nil, errors.New("an error ocurred at saving imported user")
+		return nil, fmt.Errorf("an error ocurred calling the external service: %w", err)
+	}
+	responseObject, err := unmarshalResponse(resp)
+	if err != nil {
+		return nil, fmt.Errorf("an error ocurred proccesing the response: %w", err)
+	}
+	err = writeToCSV(responseObject, c)
+	if err != nil {
+		return nil, fmt.Errorf("an error ocurred at saving imported user: %w", err)
 	}
 	return &responseObject.Data, nil
 }
@@ -53,39 +61,30 @@ func writeToCSV(responseObject extUser, c ClientService) error {
 	if responseObject.Data.ID != 0 && responseObject.Data.Email != "" {
 		err := c.csv.WriteRowData([]string{strconv.Itoa(responseObject.Data.ID), responseObject.Data.Name, responseObject.Data.Email, responseObject.Data.Gender, responseObject.Data.Status})
 		if err != nil {
-			log.Print(err.Error())
 			return err
 		}
 	}
 	return nil
 }
 
-func unmarshalResponse(bodyBytes []byte) extUser {
-
+func unmarshalResponse(bodyBytes []byte) (extUser, error) {
 	var responseObject extUser
 	err := json.Unmarshal(bodyBytes, &responseObject)
 	if err != nil {
-		fmt.Print(err.Error())
-		return extUser{}
+		return extUser{}, err
 	}
-	//fmt.Printf("API Response as struct %+v\n", responseObject)
-
-	return responseObject
+	return responseObject, nil
 }
 
-func request(c ClientService, id int) []byte {
+func request(c ClientService, id int) ([]byte, error) {
 	resp, err := c.client.R().
 		SetPathParam("id", strconv.Itoa(id)).
-		SetHeader("Accept", "application/json").
-		SetHeader("Content-Type", "application/json").
+		SetHeader("Accept", ContentTypeJsonApp).
+		SetHeader("Content-Type", ContentTypeJsonApp).
 		Get("/users/{id}")
 
 	if err != nil {
-		fmt.Print(err.Error())
-		return []byte{}
+		return []byte{}, err
 	}
-
-	bodyBytes := resp.Body()
-
-	return bodyBytes
+	return resp.Body(), nil
 }

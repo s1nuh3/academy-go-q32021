@@ -4,23 +4,23 @@ import (
 	"github.com/s1nuh3/academy-go-q32021/model"
 )
 
-//Reader interface
+//Reader Contract
 type Reader interface {
 	Get(id int) (*model.Users, error)
 	List() (*[]model.Users, error)
 }
 
-//Repository interface
+//Repository Contract
 type Repository interface {
 	Reader
 }
 
-//ClientAPI interface
+//ClientAPI Contract
 type ClientAPI interface {
 	ImportUser(id int) (*model.Users, error)
 }
 
-//GoRoutine interface
+//GoRoutine Contract
 type GoRoutine interface {
 	WorkPool(filter, items, itemsPerWorker, workers int) (*[]model.Users, error)
 }
