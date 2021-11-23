@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"strconv"
 
@@ -14,7 +13,7 @@ type RepoService struct {
 	c CSV
 }
 
-//CSV - Contract to access users CSV File
+//CSV - Contract to access users CSV File Repo
 type CSV interface {
 	GetData() ([][]string, error)
 }
@@ -40,7 +39,6 @@ func ParseUserRecord(r []string) (*model.Users, error) {
 	if err != nil {
 		return nil, errors.New("invalid record")
 	}
-	//status, _ := strconv.ParseBool(r[4])
 	u := model.Users{
 		ID:     id,
 		Name:   r[1],
@@ -54,7 +52,6 @@ func ParseUserRecord(r []string) (*model.Users, error) {
 func listUsers(c CSV) (*[]model.Users, error) {
 	rcd, err := c.GetData()
 	if err != nil {
-		log.Print(err.Error())
 		return nil, err
 	}
 	result, _, err := convertUsers(rcd)
@@ -73,7 +70,7 @@ func convertUsers(rcd [][]string) (*[]model.Users, int, error) {
 		}
 	}
 	if invalidRecords > 0 {
-		fmt.Println("Files has invalid records - #total: ", invalidRecords)
+		log.Println("Files has invalid records - #total: ", invalidRecords)
 	}
 	return &u, invalidRecords, nil
 }
@@ -82,13 +79,15 @@ func getUser(id int, c CSV) (*model.Users, error) {
 	u := &model.Users{}
 	rcd, err := c.GetData()
 	if err != nil {
-		log.Print(err.Error())
 		return u, err
 	}
 
 	for _, r := range rcd {
 		if r[0] == strconv.Itoa(id) {
-			u, _ = ParseUserRecord(r)
+			u, err = ParseUserRecord(r)
+			if err != nil {
+				return u, err
+			}
 			break
 		}
 	}

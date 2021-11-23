@@ -31,7 +31,7 @@ func TestImportHandler(t *testing.T) {
 
 	testCases := []struct {
 		name        string
-		httpstatus  int
+		httpStatus  int
 		hasError    bool
 		body        string
 		ID          string
@@ -41,7 +41,7 @@ func TestImportHandler(t *testing.T) {
 	}{
 		{
 			name:        "Invalid user ID",
-			httpstatus:  http.StatusBadRequest,
+			httpStatus:  http.StatusBadRequest,
 			hasError:    true,
 			body:        "ID provided is not valid",
 			ID:          "0",
@@ -51,7 +51,7 @@ func TestImportHandler(t *testing.T) {
 		},
 		{
 			name:        "Import successful",
-			httpstatus:  http.StatusOK,
+			httpStatus:  http.StatusOK,
 			hasError:    false,
 			body:        "User",
 			ID:          "989",
@@ -61,7 +61,7 @@ func TestImportHandler(t *testing.T) {
 		},
 		{
 			name:        "Import fails at getting user",
-			httpstatus:  http.StatusNotFound,
+			httpStatus:  http.StatusNotFound,
 			hasError:    true,
 			body:        "Any error",
 			ID:          "989",
@@ -71,7 +71,7 @@ func TestImportHandler(t *testing.T) {
 		},
 		{
 			name:        "Import fails at getting user user ID 0",
-			httpstatus:  http.StatusNotFound,
+			httpStatus:  http.StatusNotFound,
 			hasError:    true,
 			body:        "ID not found in external API",
 			ID:          "989",
@@ -80,8 +80,6 @@ func TestImportHandler(t *testing.T) {
 			testInvalid: false,
 		},
 	}
-
-	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -103,14 +101,13 @@ func TestImportHandler(t *testing.T) {
 			r := mux.NewRouter()
 			r.HandleFunc("/user/import/{id}", uc.ImportHdl)
 			r.ServeHTTP(rr, req)
-			assert.Equal(t, tc.httpstatus, rr.Code)
+			assert.Equal(t, tc.httpStatus, rr.Code)
 			respBody, err := json.Marshal(tc.body)
 			if tc.body == "User" {
 				respBody, err = json.Marshal(tc.expectedUC)
 			}
 			assert.Equal(t, respBody, rr.Body.Bytes())
 			assert.Nil(t, err)
-
 		})
 	}
 }

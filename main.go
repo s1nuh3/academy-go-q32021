@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/s1nuh3/academy-go-q32021/config"
 	"github.com/s1nuh3/academy-go-q32021/controller"
@@ -16,37 +19,54 @@ import (
 )
 
 func main() {
-
 	cfg := config.ReadConfig()
-	cvs := OpenFile(cfg.Csv.Path + cfg.Csv.Name)
-	repo := repository.New(cvs)
+	file := openFile(cfg.Csv.Path + cfg.Csv.Name)
+	repo := repository.New(file)
 	userService := user.New(repo)
 	userUseCase := usecase.NewUser(userService)
-	userHandlers := controller.NewUser(userUseCase)
+	userHandler := controller.NewUser(userUseCase)
 
-	client := clientAPI.New(cfg, repo)
-	imporUserUseCase := usecase.NewImportUser(client, userService)
-	importHandlers := controller.NewImportHandler(imporUserUseCase)
+	clientSrv := clientAPI.New(cfg, repo)
+	imporUserUseCase := usecase.NewImportUser(clientSrv, userService)
+	importHandler := controller.NewImportHandler(imporUserUseCase)
 
-	goRoutineSrv := workerpool.New(cvs)
+	goRoutineSrv := workerpool.New(file)
 	goRoutineUseCase := usecase.NewGoRoutine(goRoutineSrv)
 	goRoutineHandler := controller.NewGoRoutine(goRoutineUseCase)
 
-	r := routes.New(userHandlers, importHandlers, goRoutineHandler)
+	r := routes.New(userHandler, importHandler, goRoutineHandler)
 	port := cfg.Server.Port
-	http.HandleFunc("/", r.ServeHTTP)
 
-	log.Println("App running.. on port ", port)
+	srv := &http.Server{
+		Addr:    port,
+		Handler: r,
+	}
 
-	log.Fatal(http.ListenAndServe(port, nil))
+	log.Println("HTTP server listening on port", port)
+
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt, syscall.SIGINT)
+		<-sigint
+		log.Println("HTTP server Shutdown...")
+		if err := srv.Shutdown(context.Background()); err != nil {
+			log.Printf(" HTTP server Shutdown: %v", err)
+		}
+		close(idleConnsClosed)
+	}()
+
+	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		log.Printf("Error HTTP server ListenAndServe: %v", err)
+	}
+	<-idleConnsClosed
 }
 
-// OpenFile - Reads file from a given path, returns it os.file or error
-func OpenFile(filename string) *os.File {
+// openFile - Reads file from a given path, returns it os.file or error
+func openFile(filename string) *os.File {
 	file, err := os.OpenFile(filename, os.O_RDWR, 0644)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	//defer file.Close()
 	return file
 }

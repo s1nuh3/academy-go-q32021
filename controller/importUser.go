@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-//UseCaseImportUser - Interface to be implemented on usecase layer
+//UseCaseImportUser - Contract to be implemented on usecase layer
 type UseCaseImportUser interface {
 	ImportUserUC(id int) (*model.Users, error)
 }
@@ -43,6 +44,7 @@ func (ih ImportHandler) ImportHdl(w http.ResponseWriter, r *http.Request) {
 	u, err := ih.uci.ImportUserUC(id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		log.Println(err.Error())
 		json, err := json.Marshal(err.Error())
 		if err != nil {
 			returnError(w, r, err, http.StatusInternalServerError)
@@ -61,7 +63,7 @@ func (ih ImportHandler) ImportHdl(w http.ResponseWriter, r *http.Request) {
 		w.Write(json)
 		return
 	} else {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", ContentTypeJsonApp)
 		json, err := json.Marshal(u)
 		if err != nil {
 			returnError(w, r, err, http.StatusInternalServerError)
